@@ -1,0 +1,247 @@
+.sdd-buy-button-wrapper {
+	position: relative;
+	max-width: 100%;
+}
+
+:where(.sdd-buy-button) {
+	color: #18181b;
+	background-color: #f4f4f5;
+	border-width: 1px;
+	border-style: solid;
+	border-color: #e4e4e7;
+	border-radius: 0.375rem;
+	padding: 0.5rem 1rem;
+}
+
+.sdd-buy-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.375rem;
+	cursor: pointer;
+	transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.sdd-buy-button:hover:not(:disabled) {
+	filter: brightness(0.97);
+}
+
+.sdd-buy-button:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.sdd-buy-button-chevron {
+	display: inline-flex;
+	flex-shrink: 0;
+	color: currentColor;
+	opacity: 0.65;
+	transition: transform 0.15s ease;
+}
+
+.sdd-buy-button-wrapper.is-open .sdd-buy-button-chevron {
+	transform: rotate(180deg);
+}
+
+.sdd-buy-button-wrapper > .sdd-buy-error {
+	position: absolute;
+	top: calc(100% + 0.25rem);
+	left: 0;
+	white-space: nowrap;
+}
+
+.sdd-email-overlay {
+	display: none;
+	position: fixed;
+	inset: 0;
+	z-index: 100000;
+	align-items: center;
+	justify-content: center;
+	padding: 1.5rem;
+}
+
+.sdd-buy-button-wrapper.is-open .sdd-email-overlay {
+	display: flex;
+}
+
+.sdd-email-overlay-backdrop {
+	position: absolute;
+	inset: 0;
+	padding: 0;
+	border: 0;
+	background: rgb(9 9 11 / 0.55);
+	backdrop-filter: blur(2px);
+	cursor: pointer;
+}
+
+.sdd-email-popover {
+	position: relative;
+	z-index: 1;
+	width: min(100%, 26rem);
+	padding: 1.5rem;
+	color: #18181b;
+	background: #fff;
+	border: 1px solid #e4e4e7;
+	border-radius: 0.75rem;
+	box-shadow:
+		0 20px 25px -5px rgb(0 0 0 / 0.12),
+		0 8px 10px -6px rgb(0 0 0 / 0.12);
+	animation: sdd-email-popover-in 0.18s ease-out;
+}
+
+@keyframes sdd-email-popover-in {
+	from {
+		opacity: 0;
+		transform: translateY(0.5rem) scale(0.98);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateY(0) scale(1);
+	}
+}
+
+.sdd-email-close {
+	position: absolute;
+	top: 0.5rem;
+	right: 0.5rem;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	padding: 0;
+	color: #71717a;
+	background: transparent;
+	border: 0;
+	border-radius: 0.375rem;
+	cursor: pointer;
+	transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.sdd-email-close:hover {
+	color: #18181b;
+	background: #f4f4f5;
+}
+
+.sdd-email-popover-title {
+	margin: 0 1rem 0.5rem 0;
+	font-size: 1.125rem;
+	font-weight: 600;
+	line-height: 1.3;
+	letter-spacing: -0.01em;
+}
+
+.sdd-email-popover-description {
+	margin: 0 0 1.25rem;
+	font-size: 0.875rem;
+	line-height: 1.5;
+	color: #71717a;
+}
+
+.sdd-email-form {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.sdd-email-field-label {
+	font-size: 0.8125rem;
+	font-weight: 500;
+	line-height: 1.25rem;
+	color: #3f3f46;
+}
+
+.sdd-email-input {
+	width: 100%;
+	box-sizing: border-box;
+	padding: 0.625rem 0.75rem;
+	font: inherit;
+	font-size: 0.9375rem;
+	line-height: 1.25rem;
+	color: #18181b;
+	background: #fff;
+	border: 1px solid #d4d4d8;
+	border-radius: 0.375rem;
+	outline: none;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sdd-email-input::placeholder {
+	color: #a1a1aa;
+}
+
+.sdd-email-input:focus {
+	border-color: #a1a1aa;
+	box-shadow: 0 0 0 3px rgb(161 161 170 / 0.25);
+}
+
+.sdd-email-submit {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	margin-top: 0.25rem;
+	padding: 0.625rem 1rem;
+	font: inherit;
+	font-size: 0.9375rem;
+	font-weight: 500;
+	line-height: 1.25rem;
+	color: #fafafa;
+	background: #18181b;
+	border: 1px solid #18181b;
+	border-radius: 0.375rem;
+	cursor: pointer;
+	transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.sdd-email-submit:hover:not(:disabled) {
+	background: #27272a;
+	border-color: #27272a;
+}
+
+.sdd-email-submit:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.sdd-buy-error {
+	margin: 0;
+	font-size: 0.8125rem;
+	line-height: 1.25rem;
+	color: #dc2626;
+}
+
+.sdd-email-popover .sdd-buy-error {
+	margin-top: 0.75rem;
+}
+
+.sdd-buy-error[hidden] {
+	display: none !important;
+}
+
+body.sdd-buy-button-modal-open {
+	overflow: hidden;
+}
+
+.wp-block-simple-digital-downloads-buy-button.sdd-buy-button.alignleft {
+	float: left;
+	margin-right: 1em;
+}
+
+.wp-block-simple-digital-downloads-buy-button.sdd-buy-button.alignright {
+	float: right;
+	margin-left: 1em;
+}
+
+.wp-block-simple-digital-downloads-buy-button.sdd-buy-button.aligncenter {
+	display: table;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.wp-block-simple-digital-downloads-buy-button.sdd-buy-button.alignwide,
+.wp-block-simple-digital-downloads-buy-button.sdd-buy-button.alignfull {
+	display: flex;
+	width: 100%;
+}

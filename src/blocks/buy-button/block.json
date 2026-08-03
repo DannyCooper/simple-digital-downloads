@@ -1,0 +1,108 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "simple-digital-downloads/buy-button",
+	"version": "1.0.0",
+	"title": "Buy Button",
+	"category": "widgets",
+	"icon": "cart",
+	"description": "Add a buy button for a digital download.",
+	"textdomain": "simple-digital-downloads",
+	"attributes": {
+		"downloadId": {
+			"type": "number",
+			"default": 0
+		},
+		"buttonText": {
+			"type": "string",
+			"default": ""
+		},
+		"showPrice": {
+			"type": "boolean",
+			"default": true
+		}
+	},
+	"supports": {
+		"html": false,
+		"anchor": true,
+		"align": [ "left", "center", "right", "wide", "full" ],
+		"spacing": {
+			"margin": true,
+			"padding": true,
+			"__experimentalDefaultControls": {
+				"margin": true,
+				"padding": true
+			}
+		},
+		"color": {
+			"text": true,
+			"background": true,
+			"gradients": true,
+			"link": false,
+			"button": false,
+			"heading": false,
+			"__experimentalDefaultControls": {
+				"text": true,
+				"background": true
+			}
+		},
+		"typography": {
+			"fontSize": true,
+			"lineHeight": true,
+			"__experimentalFontFamily": true,
+			"__experimentalFontWeight": true,
+			"__experimentalFontStyle": true,
+			"__experimentalLetterSpacing": true,
+			"__experimentalTextDecoration": true,
+			"__experimentalTextTransform": true,
+			"__experimentalDefaultControls": {
+				"fontSize": true,
+				"__experimentalFontFamily": true,
+				"__experimentalFontWeight": true,
+				"lineHeight": true
+			}
+		},
+		"__experimentalBorder": {
+			"color": true,
+			"radius": true,
+			"width": true,
+			"style": true,
+			"__experimentalDefaultControls": {
+				"color": true,
+				"radius": true,
+				"width": true,
+				"style": true
+			}
+		},
+		"shadow": true,
+		"dimensions": {
+			"minHeight": true,
+			"__experimentalDefaultControls": {
+				"minHeight": true
+			}
+		},
+		"position": {
+			"sticky": true
+		}
+	},
+	"selectors": {
+		"root": ".wp-block-simple-digital-downloads-buy-button.sdd-buy-button",
+		"color": {
+			"text": ".wp-block-simple-digital-downloads-buy-button.sdd-buy-button",
+			"background": ".wp-block-simple-digital-downloads-buy-button.sdd-buy-button"
+		},
+		"border": ".wp-block-simple-digital-downloads-buy-button.sdd-buy-button",
+		"typography": ".wp-block-simple-digital-downloads-buy-button.sdd-buy-button",
+		"shadow": ".wp-block-simple-digital-downloads-buy-button.sdd-buy-button",
+		"spacing": {
+			"padding": ".wp-block-simple-digital-downloads-buy-button.sdd-buy-button",
+			"margin": ".wp-block-simple-digital-downloads-buy-button.sdd-buy-button"
+		},
+		"dimensions": {
+			"minHeight": ".wp-block-simple-digital-downloads-buy-button.sdd-buy-button"
+		}
+	},
+	"editorScript": "file:./index.js",
+	"viewScript": "file:./view.js",
+	"render": "file:./render.php"
+}
