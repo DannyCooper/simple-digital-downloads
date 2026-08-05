@@ -17,19 +17,6 @@ class SDD_Checkout {
 	 */
 	public static function init() {
 		add_action( 'rest_api_init', array( __CLASS__, 'register_routes' ) );
-		add_action( 'enqueue_block_editor_assets', array( __CLASS__, 'enqueue_editor_styles' ) );
-	}
-
-	/**
-	 * Enqueue buy button styles in the block editor for preview.
-	 */
-	public static function enqueue_editor_styles() {
-		wp_enqueue_style(
-			'sdd-buy-button',
-			SDD_PLUGIN_URL . 'assets/css/buy-button.css',
-			array(),
-			SDD_VERSION
-		);
 	}
 
 	/**
@@ -119,11 +106,7 @@ class SDD_Checkout {
 			array(
 				'post_type'   => 'sdd_order',
 				'post_status' => 'publish',
-				'post_title'  => sprintf(
-					/* translators: %s: customer email */
-					__( 'Order — %s', 'simple-digital-downloads' ),
-					$email
-				),
+				'post_title'  => SDD_Orders::format_order_title( $download->post_title, $email ),
 			),
 			true
 		);
@@ -150,7 +133,7 @@ class SDD_Checkout {
 
 		return rest_ensure_response(
 			array(
-				'delivery_url' => add_query_arg( 'sdd_token', $token, $delivery_url ),
+				'delivery_url' => add_query_arg( 'sdd_sent', '1', $delivery_url ),
 				'free'         => true,
 			)
 		);

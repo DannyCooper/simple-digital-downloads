@@ -1,3 +1,5 @@
+import './view.css';
+
 ( function () {
 	'use strict';
 

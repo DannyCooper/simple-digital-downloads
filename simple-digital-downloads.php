@@ -111,6 +111,32 @@ function sdd_get_download_text_content( $download_id ) {
 }
 
 /**
+ * Format delivery text for display: escape HTML and linkify URLs.
+ *
+ * @param string $text Plain-text delivery content.
+ * @return string Safe HTML.
+ */
+function sdd_format_delivery_text( $text ) {
+	$text = (string) $text;
+	if ( $text === '' ) {
+		return '';
+	}
+
+	$html = make_clickable( esc_html( $text ) );
+
+	return wp_kses(
+		$html,
+		array(
+			'a' => array(
+				'href'   => true,
+				'rel'    => true,
+				'target' => true,
+			),
+		)
+	);
+}
+
+/**
  * Whether a download has files or text to deliver.
  *
  * @param int $download_id Download post ID.
@@ -125,20 +151,30 @@ function sdd_download_has_deliverable( $download_id ) {
 }
 
 /**
- * Enqueue buy button frontend styles once per request.
+ * Enqueue buy button block assets for shortcode and other non-block renders.
  */
-function sdd_enqueue_buy_button_styles() {
+function sdd_enqueue_buy_button_assets() {
 	static $done = false;
 	if ( $done ) {
 		return;
 	}
 	$done = true;
-	wp_enqueue_style(
-		'sdd-buy-button',
-		SDD_PLUGIN_URL . 'assets/css/buy-button.css',
-		array(),
-		SDD_VERSION
-	);
+
+	$style_handle = generate_block_asset_handle( 'simple-digital-downloads/buy-button', 'style' );
+	$view_style_handle = generate_block_asset_handle( 'simple-digital-downloads/buy-button', 'viewStyle' );
+	$view_script_handle = generate_block_asset_handle( 'simple-digital-downloads/buy-button', 'viewScript' );
+
+	if ( wp_style_is( $style_handle, 'registered' ) ) {
+		wp_enqueue_style( $style_handle );
+	}
+
+	if ( wp_style_is( $view_style_handle, 'registered' ) ) {
+		wp_enqueue_style( $view_style_handle );
+	}
+
+	if ( wp_script_is( $view_script_handle, 'registered' ) ) {
+		wp_enqueue_script( $view_script_handle );
+	}
 }
 
 /**
@@ -164,6 +200,105 @@ function sdd_resolve_download_id( $download_id, $block = null ) {
 	}
 
 	return 0;
+}
+
+/**
+ * Enable border controls for the buy button block in the editor.
+ *
+ * Border UI is gated by theme.json settings; plugins must opt in per block.
+ *
+ * @param WP_Theme_JSON_Data $theme_json Theme JSON data.
+ * @return WP_Theme_JSON_Data
+ */
+function sdd_buy_button_theme_json( $theme_json ) {
+	if ( ! method_exists( $theme_json, 'update_with' ) ) {
+		return $theme_json;
+	}
+
+	return $theme_json->update_with(
+		array(
+			'version'  => 3,
+			'settings' => array(
+				'blocks' => array(
+					'simple-digital-downloads/buy-button' => array(
+						'border' => array(
+							'color'  => true,
+							'radius' => true,
+							'style'  => true,
+							'width'  => true,
+						),
+					),
+				),
+			),
+		)
+	);
+}
+
+/**
+ * Attribute defaults from block.json (object defaults are stripped at registration).
+ *
+ * @return array<string, mixed>
+ */
+function sdd_get_buy_button_attribute_defaults() {
+	static $defaults = null;
+
+	if ( null !== $defaults ) {
+		return $defaults;
+	}
+
+	$defaults  = array();
+	$block_json = SDD_PLUGIN_DIR . 'build/blocks/buy-button/block.json';
+
+	if ( is_readable( $block_json ) ) {
+		$metadata = json_decode( file_get_contents( $block_json ), true );
+		if ( is_array( $metadata['attributes'] ?? null ) ) {
+			foreach ( $metadata['attributes'] as $name => $config ) {
+				if ( array_key_exists( 'default', $config ) ) {
+					$defaults[ $name ] = $config['default'];
+				}
+			}
+		}
+	}
+
+	return $defaults;
+}
+
+/**
+ * Deep-merge block.json defaults into the block currently being rendered.
+ *
+ * WordPress only fills missing top-level attributes on the server, and object-type
+ * defaults are not kept on the registered block type at all.
+ *
+ * @param WP_Block $block Block instance.
+ */
+function sdd_apply_block_attribute_defaults( WP_Block $block ) {
+	if ( 'simple-digital-downloads/buy-button' !== $block->name ) {
+		return;
+	}
+
+	if ( ! class_exists( 'WP_Block_Supports' ) || ! is_array( WP_Block_Supports::$block_to_render ) ) {
+		return;
+	}
+
+	$schema_defaults = sdd_get_buy_button_attribute_defaults();
+	$schema          = $block->block_type->attributes ?? array();
+	$attrs           = WP_Block_Supports::$block_to_render['attrs'] ?? array();
+
+	foreach ( $schema as $name => $config ) {
+		$default = $schema_defaults[ $name ] ?? ( $config['default'] ?? null );
+		if ( null === $default ) {
+			continue;
+		}
+
+		if ( 'style' === $name && is_array( $default ) ) {
+			$current        = isset( $attrs['style'] ) && is_array( $attrs['style'] ) ? $attrs['style'] : array();
+			$attrs['style'] = array_replace_recursive( $default, $current );
+		} elseif ( ! array_key_exists( $name, $attrs ) ) {
+			$attrs[ $name ] = $default;
+		}
+	}
+
+	WP_Block_Supports::$block_to_render['attrs'] = $attrs;
 }
 
 /**
@@ -207,10 +342,13 @@ function sdd_render_buy_button( $download_id, $button_text = '', $show_price = t
 	}
 
 	if ( ! sdd_download_has_deliverable( $download_id ) ) {
+		if ( is_user_logged_in() && current_user_can( 'edit_posts' ) ) {
+			return '<p class="sdd-block-notice">' . esc_html__( 'Add files or delivery text to this download before the buy button can appear.', 'simple-digital-downloads' ) . '</p>';
+		}
 		return '';
 	}
 
-	sdd_enqueue_buy_button_styles();
+	sdd_enqueue_buy_button_assets();
 
 	if ( empty( $button_text ) ) {
 		$button_text = $is_free
@@ -237,6 +375,7 @@ function sdd_render_buy_button( $download_id, $button_text = '', $show_price = t
 	);
 
 	if ( $block instanceof WP_Block ) {
+		sdd_apply_block_attribute_defaults( $block );
 		$button = get_block_wrapper_attributes( $button_attrs );
 	} else {
 		$button = '';
@@ -250,14 +389,7 @@ function sdd_render_buy_button( $download_id, $button_text = '', $show_price = t
 	?>
 	<div <?php echo $wrapper_attrs; ?>>
 		<button <?php echo $button; ?>>
-			<span class="sdd-buy-button-label"><?php echo esc_html( $button_text . $price_suffix ); ?></span>
-			<?php if ( $is_free ) : ?>
-				<span class="sdd-buy-button-chevron" aria-hidden="true">
-					<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-						<path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-					</svg>
-				</span>
-			<?php endif; ?>
+			<?php echo esc_html( $button_text . $price_suffix ); ?>
 		</button>
 		<?php if ( $is_free ) : ?>
 			<div class="sdd-email-overlay" hidden aria-hidden="true">
@@ -351,10 +483,29 @@ add_action( 'plugins_loaded', function () {
 	SDD_Download_Handler::init();
 	SDD_Privacy::init();
 
+	add_filter( 'wp_theme_json_data_theme', 'sdd_buy_button_theme_json' );
 	add_action( 'init', function () {
 		$block_dir = SDD_PLUGIN_DIR . 'build/blocks/buy-button';
 		if ( file_exists( $block_dir . '/block.json' ) ) {
 			register_block_type( $block_dir );
 		}
 	} );
+	add_action( 'enqueue_block_editor_assets', 'sdd_enqueue_buy_button_editor_data' );
 } );
+
+/**
+ * Pass download settings to the buy button block editor script.
+ */
+function sdd_enqueue_buy_button_editor_data() {
+	$handle = generate_block_asset_handle( 'simple-digital-downloads/buy-button', 'editorScript' );
+	if ( ! wp_script_is( $handle, 'registered' ) ) {
+		return;
+	}
+	wp_localize_script(
+		$handle,
+		'sddBuyButtonEditor',
+		array(
+			'currency' => get_option( 'sdd_currency', 'USD' ),
+		)
+	);
+}

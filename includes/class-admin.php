@@ -21,6 +21,7 @@ class SDD_Admin {
 		add_action( 'admin_notices', array( __CLASS__, 'admin_notices' ) );
 		add_filter( 'manage_sdd_order_posts_columns', array( __CLASS__, 'order_columns' ) );
 		add_action( 'manage_sdd_order_posts_custom_column', array( __CLASS__, 'order_column_content' ), 10, 2 );
+		add_filter( 'the_title', array( __CLASS__, 'filter_order_list_title' ), 10, 2 );
 		add_filter( 'post_row_actions', array( __CLASS__, 'order_row_actions' ), 10, 2 );
 		add_action( 'admin_post_sdd_resend_email', array( __CLASS__, 'handle_resend_email' ) );
 		add_action( 'admin_post_sdd_test_connection', array( __CLASS__, 'handle_test_connection' ) );
@@ -280,6 +281,38 @@ class SDD_Admin {
 			echo ' <a href="' . esc_url( admin_url( 'edit.php?post_type=sdd_download&page=sdd-settings' ) ) . '">' . esc_html__( 'View settings', 'simple-digital-downloads' ) . '</a>';
 			echo '</p></div>';
 		}
+	}
+
+	/**
+	 * Show download name and email in the orders list title column.
+	 *
+	 * @param string $title   Post title.
+	 * @param int    $post_id Post ID.
+	 * @return string
+	 */
+	public static function filter_order_list_title( $title, $post_id ) {
+		if ( ! is_admin() || ! $post_id ) {
+			return $title;
+		}
+
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		if ( ! $screen || 'edit-sdd_order' !== $screen->id ) {
+			return $title;
+		}
+
+		$post = get_post( $post_id );
+		if ( ! $post || 'sdd_order' !== $post->post_type ) {
+			return $title;
+		}
+
+		$download_name = SDD_Orders::get_download_name( $post_id );
+		$email         = SDD_Orders::get_customer_email( $post_id );
+
+		if ( $download_name && $email ) {
+			return SDD_Orders::format_order_title( $download_name, $email );
+		}
+
+		return $title;
 	}
 
 	/**

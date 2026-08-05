@@ -135,6 +135,89 @@ class SDD_Uploads {
 	}
 
 	/**
+	 * Move an attachment into the protected directory and mark it protected.
+	 *
+	 * @param int $attachment_id Attachment ID.
+	 * @return bool
+	 */
+	public static function protect_attachment( $attachment_id ) {
+		$attachment_id = absint( $attachment_id );
+		if ( ! $attachment_id || 'attachment' !== get_post_type( $attachment_id ) ) {
+			return false;
+		}
+
+		if ( get_post_meta( $attachment_id, self::META_PROTECTED, true ) ) {
+			return true;
+		}
+
+		$file = get_attached_file( $attachment_id );
+		if ( ! $file || ! file_exists( $file ) ) {
+			return false;
+		}
+
+		self::ensure_protected_directory();
+		$protected_path = wp_normalize_path( self::get_protected_path() );
+		$file           = wp_normalize_path( $file );
+
+		if ( 0 === strpos( $file, $protected_path ) ) {
+			update_post_meta( $attachment_id, self::META_PROTECTED, 1 );
+			return true;
+		}
+
+		$filename = wp_unique_filename( $protected_path, basename( $file ) );
+		$new_file = trailingslashit( $protected_path ) . $filename;
+
+		if ( ! @rename( $file, $new_file ) ) {
+			return false;
+		}
+
+		update_attached_file( $attachment_id, $new_file );
+
+		$upload   = wp_upload_dir();
+		$relative = ltrim( str_replace( wp_normalize_path( $upload['basedir'] ), '', $new_file ), '/' );
+		update_post_meta( $attachment_id, '_wp_attached_file', $relative );
+
+		wp_update_post(
+			array(
+				'ID'   => $attachment_id,
+				'guid' => trailingslashit( self::get_protected_url() ) . $filename,
+			)
+		);
+
+		if ( ! function_exists( 'wp_generate_attachment_metadata' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/image.php';
+		}
+		$metadata = wp_generate_attachment_metadata( $attachment_id, $new_file );
+		if ( ! is_wp_error( $metadata ) && ! empty( $metadata ) ) {
+			wp_update_attachment_metadata( $attachment_id, $metadata );
+		}
+
+		update_post_meta( $attachment_id, self::META_PROTECTED, 1 );
+		return true;
+	}
+
+	/**
+	 * Sanitize and protect a list of download file attachment IDs.
+	 *
+	 * @param mixed $value Raw file ID list.
+	 * @return int[]
+	 */
+	public static function sanitize_download_file_ids( $value ) {
+		if ( ! is_array( $value ) ) {
+			return array();
+		}
+
+		$file_ids = array();
+		foreach ( array_values( array_filter( array_map( 'absint', $value ) ) ) as $file_id ) {
+			if ( $file_id && self::protect_attachment( $file_id ) ) {
+				$file_ids[] = $file_id;
+			}
+		}
+
+		return $file_ids;
+	}
+
+	/**
 	 * Mark attachment as protected.
 	 *
 	 * @param int $attachment_id Attachment ID.

@@ -29,6 +29,17 @@ class SDD_Orders {
 	const META_EMAIL_ERROR           = '_sdd_email_error';
 
 	/**
+	 * Format an order title for admin display.
+	 *
+	 * @param string $download_name Download name.
+	 * @param string $email         Customer email.
+	 * @return string
+	 */
+	public static function format_order_title( $download_name, $email ) {
+		return sprintf( '%s — %s', $download_name, $email );
+	}
+
+	/**
 	 * Get customer email for an order.
 	 *
 	 * @param int $order_id Order ID.
@@ -325,11 +336,7 @@ class SDD_Orders {
 			array(
 				'post_type'   => 'sdd_order',
 				'post_status' => 'publish',
-				'post_title'  => sprintf(
-					/* translators: %s: customer email */
-					__( 'Order — %s', 'simple-digital-downloads' ),
-					$email ?: __( 'Unknown', 'simple-digital-downloads' )
-				),
+				'post_title'  => self::format_order_title( $download->post_title, $email ?: __( 'Unknown', 'simple-digital-downloads' ) ),
 			),
 			true
 		);
@@ -371,8 +378,6 @@ class SDD_Orders {
 		}
 
 		$download_name = self::get_download_name( $order_id );
-		$delivery_url  = self::get_delivery_url( $order_id );
-		$delivered_text = self::get_delivered_text( $order_id );
 
 		$subject = sprintf(
 			/* translators: %s: download name */
@@ -380,20 +385,7 @@ class SDD_Orders {
 			$download_name
 		);
 
-		$message = sprintf(
-			/* translators: 1: download name, 2: delivery URL, 3: expiry hours */
-			__(
-				"Thank you for your purchase!\n\nYour download \"%1\$s\" is ready:\n%2\$s\n\nThis link expires in %3\$d hours.",
-				'simple-digital-downloads'
-			),
-			$download_name,
-			$delivery_url,
-			(int) get_option( 'sdd_token_expiry_hours', 48 )
-		);
-
-		if ( $delivered_text !== '' ) {
-			$message .= "\n\n" . __( 'Your access details:', 'simple-digital-downloads' ) . "\n" . $delivered_text;
-		}
+		$message = self::build_email_message( $order_id );
 
 		$sent = wp_mail( $email, $subject, $message );
 
@@ -405,6 +397,70 @@ class SDD_Orders {
 		}
 
 		return $sent;
+	}
+
+	/**
+	 * Build the plain-text delivery email body.
+	 *
+	 * Free orders include direct download links in the email only. Paid orders
+	 * link to the delivery page where files are shown after checkout.
+	 *
+	 * @param int $order_id Order ID.
+	 * @return string
+	 */
+	private static function build_email_message( $order_id ) {
+		$download_name  = self::get_download_name( $order_id );
+		$delivered_text = self::get_delivered_text( $order_id );
+		$token          = self::get_token( $order_id );
+		$file_ids       = self::get_file_ids( $order_id );
+		$amount         = self::get_amount( $order_id );
+		$expiry_hours   = (int) get_option( 'sdd_token_expiry_hours', 48 );
+
+		$lines   = array();
+		$lines[] = __( 'Thank you for your purchase!', 'simple-digital-downloads' );
+		$lines[] = '';
+		$lines[] = sprintf(
+			/* translators: %s: download name */
+			__( 'Your download "%s" is ready:', 'simple-digital-downloads' ),
+			$download_name
+		);
+
+		if ( 0 === $amount ) {
+			if ( ! empty( $file_ids ) ) {
+				$lines[] = '';
+				if ( count( $file_ids ) === 1 ) {
+					$lines[] = self::get_file_download_url( $token, 0 );
+				} else {
+					foreach ( $file_ids as $index => $file_id ) {
+						$lines[] = basename( get_attached_file( $file_id ) );
+						$lines[] = self::get_file_download_url( $token, $index );
+						$lines[] = '';
+					}
+				}
+			}
+		} else {
+			$lines[] = self::get_delivery_url( $order_id );
+		}
+
+		$lines[] = '';
+		$lines[] = sprintf(
+			/* translators: %d: number of hours */
+			_n(
+				'This link expires in %d hour.',
+				'This link expires in %d hours.',
+				$expiry_hours,
+				'simple-digital-downloads'
+			),
+			$expiry_hours
+		);
+
+		if ( $delivered_text !== '' ) {
+			$lines[] = '';
+			$lines[] = __( 'Your access details:', 'simple-digital-downloads' );
+			$lines[] = $delivered_text;
+		}
+
+		return implode( "\n", $lines );
 	}
 
 	/**

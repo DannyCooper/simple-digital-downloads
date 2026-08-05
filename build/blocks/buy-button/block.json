@@ -20,6 +20,22 @@
     "showPrice": {
       "type": "boolean",
       "default": true
+    },
+    "style": {
+      "type": "object",
+      "default": {
+        "spacing": {
+          "padding": {
+            "top": "1rem",
+            "right": "1rem",
+            "bottom": "1rem",
+            "left": "1rem"
+          }
+        },
+        "typography": {
+          "fontWeight": "700"
+        }
+      }
     }
   },
   "supports": {
@@ -35,6 +51,10 @@
     "spacing": {
       "margin": true,
       "padding": true,
+      "defaultControls": {
+        "margin": true,
+        "padding": true
+      },
       "__experimentalDefaultControls": {
         "margin": true,
         "padding": true
@@ -47,6 +67,10 @@
       "link": false,
       "button": false,
       "heading": false,
+      "defaultControls": {
+        "text": true,
+        "background": true
+      },
       "__experimentalDefaultControls": {
         "text": true,
         "background": true
@@ -55,17 +79,41 @@
     "typography": {
       "fontSize": true,
       "lineHeight": true,
+      "fontFamily": true,
+      "fontWeight": true,
+      "fontStyle": true,
+      "letterSpacing": true,
+      "textDecoration": true,
+      "textTransform": true,
       "__experimentalFontFamily": true,
       "__experimentalFontWeight": true,
       "__experimentalFontStyle": true,
       "__experimentalLetterSpacing": true,
       "__experimentalTextDecoration": true,
       "__experimentalTextTransform": true,
+      "defaultControls": {
+        "fontSize": true,
+        "fontFamily": true,
+        "fontWeight": true,
+        "lineHeight": true
+      },
       "__experimentalDefaultControls": {
         "fontSize": true,
         "__experimentalFontFamily": true,
         "__experimentalFontWeight": true,
         "lineHeight": true
+      }
+    },
+    "border": {
+      "color": true,
+      "radius": true,
+      "width": true,
+      "style": true,
+      "defaultControls": {
+        "color": true,
+        "radius": true,
+        "width": true,
+        "style": true
       }
     },
     "__experimentalBorder": {
@@ -83,6 +131,9 @@
     "shadow": true,
     "dimensions": {
       "minHeight": true,
+      "defaultControls": {
+        "minHeight": true
+      },
       "__experimentalDefaultControls": {
         "minHeight": true
       }
@@ -91,24 +142,23 @@
       "sticky": true
     }
   },
-  "selectors": {
-    "root": ".wp-block-simple-digital-downloads-buy-button.sdd-buy-button",
-    "color": {
-      "text": ".wp-block-simple-digital-downloads-buy-button.sdd-buy-button",
-      "background": ".wp-block-simple-digital-downloads-buy-button.sdd-buy-button"
+  "styles": [
+    {
+      "name": "light",
+      "label": "Light",
+      "isDefault": true
     },
-    "border": ".wp-block-simple-digital-downloads-buy-button.sdd-buy-button",
-    "typography": ".wp-block-simple-digital-downloads-buy-button.sdd-buy-button",
-    "shadow": ".wp-block-simple-digital-downloads-buy-button.sdd-buy-button",
-    "spacing": {
-      "padding": ".wp-block-simple-digital-downloads-buy-button.sdd-buy-button",
-      "margin": ".wp-block-simple-digital-downloads-buy-button.sdd-buy-button"
-    },
-    "dimensions": {
-      "minHeight": ".wp-block-simple-digital-downloads-buy-button.sdd-buy-button"
+    {
+      "name": "dark",
+      "label": "Dark"
     }
+  ],
+  "selectors": {
+    "root": ".wp-block-simple-digital-downloads-buy-button.sdd-buy-button"
   },
   "editorScript": "file:./index.js",
+  "style": "file:./style-index.css",
   "viewScript": "file:./view.js",
+  "viewStyle": "file:./view.css",
   "render": "file:./render.php"
 }

@@ -107,6 +107,10 @@ class SDD_Delivery {
 		$session_id = isset( $_GET['sdd_session'] ) ? sanitize_text_field( wp_unslash( $_GET['sdd_session'] ) ) : '';
 
 		if ( empty( $token ) && empty( $session_id ) ) {
+			if ( isset( $_GET['sdd_sent'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['sdd_sent'] ) ) ) {
+				return '<div class="sdd-delivery-notice"><p>' . esc_html__( 'Thank you! Check your email for your download link.', 'simple-digital-downloads' ) . '</p></div>';
+			}
+
 			return '<p>' . esc_html__( 'No purchase session found.', 'simple-digital-downloads' ) . '</p>';
 		}
 
@@ -249,10 +253,24 @@ class SDD_Delivery {
 	 * @param string $text Delivered text content.
 	 */
 	private static function render_text_content( $text ) {
+		static $styles_printed = false;
 		?>
+		<?php if ( ! $styles_printed ) : ?>
+			<style>
+				.sdd-delivery-text-content {
+					white-space: pre-wrap;
+					word-break: break-word;
+					margin: 0;
+				}
+				.sdd-delivery-text-content a {
+					word-break: break-all;
+				}
+			</style>
+			<?php $styles_printed = true; ?>
+		<?php endif; ?>
 		<div class="sdd-delivery-text">
 			<p><strong><?php esc_html_e( 'Your access details', 'simple-digital-downloads' ); ?></strong></p>
-			<pre class="sdd-delivery-text-content"><?php echo esc_html( $text ); ?></pre>
+			<div class="sdd-delivery-text-content"><?php echo sdd_format_delivery_text( $text ); ?></div>
 			<p>
 				<button type="button" class="button sdd-copy-text" data-copy-text="<?php echo esc_attr( $text ); ?>">
 					<?php esc_html_e( 'Copy', 'simple-digital-downloads' ); ?>

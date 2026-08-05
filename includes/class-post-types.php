@@ -100,13 +100,15 @@ class SDD_Post_Types {
 			array(
 				'type'              => 'array',
 				'single'            => true,
-				'show_in_rest'      => false,
-				'sanitize_callback' => function ( $value ) {
-					if ( ! is_array( $value ) ) {
-						return array();
-					}
-					return array_values( array_filter( array_map( 'absint', $value ) ) );
-				},
+				'show_in_rest'      => array(
+					'schema' => array(
+						'type'  => 'array',
+						'items' => array(
+							'type' => 'integer',
+						),
+					),
+				),
+				'sanitize_callback' => array( 'SDD_Uploads', 'sanitize_download_file_ids' ),
 				'auth_callback'     => function () {
 					return current_user_can( 'edit_posts' );
 				},
@@ -119,7 +121,7 @@ class SDD_Post_Types {
 			array(
 				'type'              => 'string',
 				'single'            => true,
-				'show_in_rest'      => false,
+				'show_in_rest'      => true,
 				'sanitize_callback' => 'sanitize_textarea_field',
 				'auth_callback'     => function () {
 					return current_user_can( 'edit_posts' );

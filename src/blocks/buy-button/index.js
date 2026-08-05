@@ -1,6 +1,9 @@
 import { registerBlockType } from '@wordpress/blocks';
+import metadata from './block.json';
 import Edit from './edit';
+import './style.css';
 
-registerBlockType( 'simple-digital-downloads/buy-button', {
+registerBlockType( metadata.name, {
+	...metadata,
 	edit: Edit,
 } );

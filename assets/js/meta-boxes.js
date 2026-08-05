@@ -2,9 +2,47 @@
 	'use strict';
 
 	var frame;
+	var zeroDecimalCurrencies = ( window.sddMetaBoxes && window.sddMetaBoxes.zeroDecimalCurrencies ) || [];
+	var currency = ( window.sddMetaBoxes && window.sddMetaBoxes.currency ) || 'USD';
 
 	function getTemplate() {
-		return $( '#tmpl-sdd-file-row' ).html();
+		var el = document.getElementById( 'tmpl-sdd-file-row' );
+		return el ? el.textContent : '';
+	}
+
+	function parsePriceToMinor( price ) {
+		var normalized = String( price ).trim().replace( ',', '.' );
+		if ( ! normalized || ! /^[0-9]*\.?[0-9]+$/.test( normalized ) ) {
+			return 0;
+		}
+		var amount = parseFloat( normalized );
+		if ( isNaN( amount ) ) {
+			return 0;
+		}
+		if ( zeroDecimalCurrencies.indexOf( currency.toUpperCase() ) !== -1 ) {
+			return Math.round( amount );
+		}
+		return Math.round( amount * 100 );
+	}
+
+	function collectDownloadMeta() {
+		var fileIds = [];
+		$( '#sdd-files-list input[name="sdd_files[]"]' ).each( function () {
+			var id = parseInt( this.value, 10 );
+			if ( id ) {
+				fileIds.push( id );
+			}
+		} );
+
+		return {
+			price: $( '#sdd_price' ).val() || '',
+			files: fileIds,
+			text_content: $( '#sdd_text_content' ).val() || '',
+		};
+	}
+
+	function notifyDownloadMetaChange() {
+		document.dispatchEvent( new CustomEvent( 'sdd-download-meta-change' ) );
 	}
 
 	function bindRow( $row ) {
@@ -35,6 +73,7 @@
 				var attachment = frame.state().get( 'selection' ).first().toJSON();
 				$li.find( 'input[type="hidden"]' ).val( attachment.id );
 				$li.find( '.sdd-file-name' ).text( attachment.filename || attachment.title );
+				notifyDownloadMetaChange();
 			} );
 
 			frame.open();
@@ -43,10 +82,26 @@
 		$row.find( '.sdd-remove-file' ).on( 'click', function ( e ) {
 			e.preventDefault();
 			$( this ).closest( '.sdd-file-row' ).remove();
+			notifyDownloadMetaChange();
 		} );
 	}
 
 	if ( window.wp && wp.hooks ) {
+		wp.hooks.addFilter( 'editor.PreSavePost', 'sdd/sync-download-meta', function ( edits ) {
+			if ( ! document.getElementById( 'sdd_price' ) ) {
+				return edits;
+			}
+
+			var meta = collectDownloadMeta();
+			edits.meta = Object.assign( {}, edits.meta || {}, {
+				_sdd_price: parsePriceToMinor( meta.price ),
+				_sdd_files: meta.files,
+				_sdd_text_content: meta.text_content,
+			} );
+
+			return edits;
+		} );
+
 		wp.hooks.addFilter( 'plupload_default_params', 'sdd/protected-upload', function ( params ) {
 			if ( window.sdd_upload_to_protected ) {
 				params.sdd_protected = '1';
@@ -62,6 +117,7 @@
 
 		$( '#sdd-files-list' ).sortable( {
 			handle: '.sdd-drag-handle',
+			update: notifyDownloadMetaChange,
 		} );
 
 		$( '#sdd-add-file' ).on( 'click', function ( e ) {
@@ -70,6 +126,9 @@
 			var $row = $( html );
 			$( '#sdd-files-list' ).append( $row );
 			bindRow( $row );
+			$row.find( '.sdd-select-file' ).trigger( 'click' );
 		} );
+
+		$( '#sdd_price, #sdd_text_content' ).on( 'input change', notifyDownloadMetaChange );
 	} );
 }( jQuery ) );

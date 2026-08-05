@@ -2,6 +2,15 @@
 	"name": "simple-digital-downloads",
 	"version": "1.0.0",
 	"description": "Sell digital files with Stripe on WordPress.",
+	"files": [
+		"assets/**",
+		"build/**",
+		"includes/**",
+		"index.php",
+		"readme.txt",
+		"simple-digital-downloads.php",
+		"uninstall.php"
+	],
 	"scripts": {
 		"build": "wp-scripts build",
         "check-engines": "wp-scripts check-engines",

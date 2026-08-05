@@ -50,7 +50,7 @@ class SDD_Meta_Boxes {
 		wp_enqueue_script(
 			'sdd-meta-boxes',
 			SDD_PLUGIN_URL . 'assets/js/meta-boxes.js',
-			array( 'jquery', 'jquery-ui-sortable' ),
+			array( 'jquery', 'jquery-ui-sortable', 'media-editor' ),
 			SDD_VERSION,
 			true
 		);
@@ -64,9 +64,11 @@ class SDD_Meta_Boxes {
 			'sdd-meta-boxes',
 			'sddMetaBoxes',
 			array(
-				'selectFile' => __( 'Select File', 'simple-digital-downloads' ),
-				'changeFile' => __( 'Change File', 'simple-digital-downloads' ),
-				'remove'     => __( 'Remove', 'simple-digital-downloads' ),
+				'selectFile'            => __( 'Select File', 'simple-digital-downloads' ),
+				'changeFile'            => __( 'Change File', 'simple-digital-downloads' ),
+				'remove'                => __( 'Remove', 'simple-digital-downloads' ),
+				'currency'              => get_option( 'sdd_currency', 'USD' ),
+				'zeroDecimalCurrencies' => sdd_zero_decimal_currencies(),
 			)
 		);
 	}
@@ -97,7 +99,7 @@ class SDD_Meta_Boxes {
 		<p>
 			<label for="sdd_text_content"><strong><?php esc_html_e( 'Delivery text', 'simple-digital-downloads' ); ?></strong></label><br>
 			<textarea id="sdd_text_content" name="sdd_text_content" rows="4" class="large-text"><?php echo esc_textarea( $text ); ?></textarea>
-			<span class="description"><?php esc_html_e( 'Optional. Shown to the buyer after purchase — e.g. a password, license key, or access instructions. Can be used alone or alongside files.', 'simple-digital-downloads' ); ?></span>
+			<span class="description"><?php esc_html_e( 'Optional. Shown to the buyer after purchase — e.g. a password, license key, or access instructions. URLs become clickable links. Can be used alone or alongside files.', 'simple-digital-downloads' ); ?></span>
 		</p>
 
 		<div id="sdd-files-repeater">
@@ -142,15 +144,36 @@ class SDD_Meta_Boxes {
 	}
 
 	/**
+	 * Persist download meta from request values.
+	 *
+	 * @param int   $post_id Post ID.
+	 * @param array $data    Meta values.
+	 */
+	public static function persist_download_meta( $post_id, $data ) {
+		if ( isset( $data['price'] ) ) {
+			$currency = get_option( 'sdd_currency', 'USD' );
+			$price    = sdd_price_to_minor( sanitize_text_field( (string) $data['price'] ), $currency );
+			update_post_meta( $post_id, '_sdd_price', $price );
+		}
+
+		if ( isset( $data['files'] ) ) {
+			$file_ids = SDD_Uploads::sanitize_download_file_ids( $data['files'] );
+			update_post_meta( $post_id, '_sdd_files', $file_ids );
+		}
+
+		if ( isset( $data['text_content'] ) ) {
+			$text = sanitize_textarea_field( (string) $data['text_content'] );
+			update_post_meta( $post_id, '_sdd_text_content', $text );
+		}
+	}
+
+	/**
 	 * Save meta box data.
 	 *
 	 * @param int     $post_id Post ID.
 	 * @param WP_Post $post    Post object.
 	 */
 	public static function save( $post_id, $post ) {
-		if ( ! isset( $_POST['sdd_download_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['sdd_download_nonce'] ) ), 'sdd_save_download' ) ) {
-			return;
-		}
 		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
 			return;
 		}
@@ -158,26 +181,17 @@ class SDD_Meta_Boxes {
 			return;
 		}
 
-		$currency = get_option( 'sdd_currency', 'USD' );
-		if ( isset( $_POST['sdd_price'] ) ) {
-			$price = sdd_price_to_minor( sanitize_text_field( wp_unslash( $_POST['sdd_price'] ) ), $currency );
-			update_post_meta( $post_id, '_sdd_price', $price );
+		if ( ! isset( $_POST['sdd_download_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['sdd_download_nonce'] ) ), 'sdd_save_download' ) ) {
+			return;
 		}
 
-		$file_ids = array();
-		if ( isset( $_POST['sdd_files'] ) && is_array( $_POST['sdd_files'] ) ) {
-			foreach ( $_POST['sdd_files'] as $file_id ) {
-				$file_id = absint( $file_id );
-				if ( $file_id && get_post_meta( $file_id, '_sdd_protected', true ) ) {
-					$file_ids[] = $file_id;
-				}
-			}
-		}
-		update_post_meta( $post_id, '_sdd_files', $file_ids );
-
-		if ( isset( $_POST['sdd_text_content'] ) ) {
-			$text = sanitize_textarea_field( wp_unslash( $_POST['sdd_text_content'] ) );
-			update_post_meta( $post_id, '_sdd_text_content', $text );
-		}
+		self::persist_download_meta(
+			$post_id,
+			array(
+				'price'        => wp_unslash( $_POST['sdd_price'] ?? '' ),
+				'files'        => isset( $_POST['sdd_files'] ) && is_array( $_POST['sdd_files'] ) ? wp_unslash( $_POST['sdd_files'] ) : array(),
+				'text_content' => wp_unslash( $_POST['sdd_text_content'] ?? '' ),
+			)
+		);
 	}
 }
