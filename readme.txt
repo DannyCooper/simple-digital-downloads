@@ -4,7 +4,7 @@ Tags: stripe, digital downloads, sell files, ebooks, pdf
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -48,6 +48,7 @@ Simple Digital Downloads lets you sell digital files on your WordPress site usin
 * Payment Intents — Read
 * Webhook Endpoints — Write
 * Refunds — Read
+* Products — Write (optional, for BookFunnel or other integrations)
 
 = Does this plugin handle taxes? =
 
@@ -58,6 +59,10 @@ No. Tax and VAT collection is not included. You are responsible for your own tax
 Purchase data is processed by Stripe. See [Stripe's Privacy Policy](https://stripe.com/privacy) for details. Customer email addresses and order records are stored in your WordPress database.
 
 == Changelog ==
+
+= 1.0.1 =
+* Added "Create Stripe Product" button so downloads can have a permanent Stripe product ID (e.g. for BookFunnel). Requires the optional "Products — Write" key permission and a live key.
+* Order emails for free downloads now say "Thank you!" and only mention link expiry when there is an expiring link.
 
 = 1.0.0 =
 * Initial release

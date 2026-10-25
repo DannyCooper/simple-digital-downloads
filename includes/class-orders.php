@@ -416,8 +416,15 @@ class SDD_Orders {
 		$amount         = self::get_amount( $order_id );
 		$expiry_hours   = (int) get_option( 'sdd_token_expiry_hours', 48 );
 
+		$is_free          = 0 === $amount;
+		$has_files        = ! empty( $file_ids );
+		$has_text         = $delivered_text !== '';
+		$has_expiring_url = $has_files || ! $is_free;
+
 		$lines   = array();
-		$lines[] = __( 'Thank you for your purchase!', 'simple-digital-downloads' );
+		$lines[] = $is_free
+			? __( 'Thank you!', 'simple-digital-downloads' )
+			: __( 'Thank you for your purchase!', 'simple-digital-downloads' );
 		$lines[] = '';
 		$lines[] = sprintf(
 			/* translators: %s: download name */
@@ -425,8 +432,8 @@ class SDD_Orders {
 			$download_name
 		);
 
-		if ( 0 === $amount ) {
-			if ( ! empty( $file_ids ) ) {
+		if ( $is_free ) {
+			if ( $has_files ) {
 				$lines[] = '';
 				if ( count( $file_ids ) === 1 ) {
 					$lines[] = self::get_file_download_url( $token, 0 );
@@ -442,21 +449,25 @@ class SDD_Orders {
 			$lines[] = self::get_delivery_url( $order_id );
 		}
 
-		$lines[] = '';
-		$lines[] = sprintf(
-			/* translators: %d: number of hours */
-			_n(
-				'This link expires in %d hour.',
-				'This link expires in %d hours.',
-				$expiry_hours,
-				'simple-digital-downloads'
-			),
-			$expiry_hours
-		);
-
-		if ( $delivered_text !== '' ) {
+		if ( $has_expiring_url ) {
 			$lines[] = '';
-			$lines[] = __( 'Your access details:', 'simple-digital-downloads' );
+			$lines[] = sprintf(
+				/* translators: %d: number of hours */
+				_n(
+					'This link expires in %d hour.',
+					'This link expires in %d hours.',
+					$expiry_hours,
+					'simple-digital-downloads'
+				),
+				$expiry_hours
+			);
+		}
+
+		if ( $has_text ) {
+			$lines[] = '';
+			if ( $has_expiring_url ) {
+				$lines[] = __( 'Your access details:', 'simple-digital-downloads' );
+			}
 			$lines[] = $delivered_text;
 		}
 
