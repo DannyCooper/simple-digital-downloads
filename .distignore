@@ -1,0 +1,11 @@
+/.git
+/.github
+/.wordpress-org
+/node_modules
+/src
+.distignore
+.gitignore
+.DS_Store
+package.json
+package-lock.json
+simple-digital-downloads.zip
