@@ -3,20 +3,22 @@
  * Plugin Name:       Simple Digital Downloads – Sell Files, Ebooks & PDFs with Stripe
  * Plugin URI:        https://wordpress.org/plugins/simple-digital-downloads/
  * Description:       Sell digital files with Stripe. Paste a restricted API key, set a price, and drop a buy button into any post.
- * Version:           1.0.1
+ * Version:           1.0.2
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Simple Digital Downloads
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       simple-digital-downloads
+ * GitHub Plugin URI: DannyCooper/simple-digital-downloads
+ * Primary Branch:    main
  *
  * @package SimpleDigitalDownloads
  */
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'SDD_VERSION', '1.0.1' );
+define( 'SDD_VERSION', '1.0.2' );
 define( 'SDD_PLUGIN_FILE', __FILE__ );
 define( 'SDD_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SDD_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
