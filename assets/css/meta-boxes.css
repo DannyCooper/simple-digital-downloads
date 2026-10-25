@@ -24,3 +24,11 @@
 	font-family: monospace;
 	font-size: 13px;
 }
+
+#sdd-stripe-product {
+	margin-top: 16px;
+}
+
+.sdd-stripe-product-error {
+	color: #d63638;
+}

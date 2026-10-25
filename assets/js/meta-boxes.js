@@ -41,6 +41,13 @@
 		};
 	}
 
+	function getCurrentTitle() {
+		if ( window.wp && wp.data && wp.data.select( 'core/editor' ) ) {
+			return wp.data.select( 'core/editor' ).getEditedPostAttribute( 'title' ) || '';
+		}
+		return $( '#title' ).val() || '';
+	}
+
 	function notifyDownloadMetaChange() {
 		document.dispatchEvent( new CustomEvent( 'sdd-download-meta-change' ) );
 	}
@@ -130,5 +137,53 @@
 		} );
 
 		$( '#sdd_price, #sdd_text_content' ).on( 'input change', notifyDownloadMetaChange );
+
+		$( '#sdd-create-stripe-product' ).on( 'click', function ( e ) {
+			e.preventDefault();
+			var $btn   = $( this );
+			var $box   = $( '#sdd-stripe-product' );
+			var $error = $box.find( '.sdd-stripe-product-error' );
+			var label  = $btn.text();
+
+			$btn.prop( 'disabled', true ).text( sddMetaBoxes.creating );
+			$error.prop( 'hidden', true ).text( '' );
+
+			$.post( sddMetaBoxes.ajaxUrl, {
+				action: 'sdd_create_stripe_product',
+				nonce: sddMetaBoxes.stripeProductNonce,
+				post_id: sddMetaBoxes.postId,
+				title: getCurrentTitle(),
+			} ).done( function ( response ) {
+				if ( response && response.success ) {
+					$( '#sdd-stripe-product-id' ).text( response.data.product_id );
+					$box.find( '.sdd-stripe-product-id' ).prop( 'hidden', false );
+					$box.find( '.sdd-stripe-product-create' ).remove();
+					return;
+				}
+				var message = response && response.data && response.data.message ? response.data.message : sddMetaBoxes.requestFailed;
+				$error.text( message ).prop( 'hidden', false );
+				$btn.prop( 'disabled', false ).text( label );
+			} ).fail( function ( xhr ) {
+				var data    = xhr.responseJSON && xhr.responseJSON.data;
+				var message = data && data.message ? data.message : sddMetaBoxes.requestFailed;
+				$error.text( message ).prop( 'hidden', false );
+				$btn.prop( 'disabled', false ).text( label );
+			} );
+		} );
+
+		$( '#sdd-copy-stripe-product' ).on( 'click', function ( e ) {
+			e.preventDefault();
+			var $btn = $( this );
+			var text = $( '#sdd-stripe-product-id' ).text();
+			if ( ! navigator.clipboard ) {
+				return;
+			}
+			navigator.clipboard.writeText( text ).then( function () {
+				$btn.text( sddMetaBoxes.copied );
+				setTimeout( function () {
+					$btn.text( sddMetaBoxes.copy );
+				}, 1500 );
+			} );
+		} );
 	} );
 }( jQuery ) );

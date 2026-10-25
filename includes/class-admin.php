@@ -114,6 +114,7 @@ class SDD_Admin {
 								<li><?php esc_html_e( 'Payment Intents — Read', 'simple-digital-downloads' ); ?></li>
 								<li><?php esc_html_e( 'Webhook Endpoints — Write', 'simple-digital-downloads' ); ?></li>
 								<li><?php esc_html_e( 'Refunds — Read', 'simple-digital-downloads' ); ?></li>
+								<li><?php esc_html_e( 'Products — Write (optional, for BookFunnel or other integrations)', 'simple-digital-downloads' ); ?></li>
 							</ul>
 						</td>
 					</tr>

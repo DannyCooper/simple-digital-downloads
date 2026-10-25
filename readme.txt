@@ -48,6 +48,7 @@ Simple Digital Downloads lets you sell digital files on your WordPress site usin
 * Payment Intents — Read
 * Webhook Endpoints — Write
 * Refunds — Read
+* Products — Write (optional, for BookFunnel or other integrations)
 
 = Does this plugin handle taxes? =
 

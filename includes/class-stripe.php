@@ -35,6 +35,16 @@ class SDD_Stripe {
 	}
 
 	/**
+	 * Create a product.
+	 *
+	 * @param array $params Product parameters.
+	 * @return array|WP_Error
+	 */
+	public static function create_product( $params ) {
+		return self::post( 'products', $params );
+	}
+
+	/**
 	 * Create a webhook endpoint.
 	 *
 	 * @param array $params Endpoint parameters.

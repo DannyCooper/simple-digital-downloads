@@ -176,9 +176,6 @@ class SDD_Checkout {
 					'price_data' => array(
 						'currency'     => strtolower( $currency ),
 						'unit_amount'  => $price,
-						'product_data' => array(
-							'name' => $download->post_title,
-						),
 					),
 				),
 			),
@@ -188,6 +185,15 @@ class SDD_Checkout {
 				'site_url'    => home_url(),
 			),
 		);
+
+		$product_id = SDD_Meta_Boxes::get_stripe_product_id( $download->ID );
+		if ( $product_id ) {
+			$params['line_items'][0]['price_data']['product'] = $product_id;
+		} else {
+			$params['line_items'][0]['price_data']['product_data'] = array(
+				'name' => $download->post_title,
+			);
+		}
 
 		$session = SDD_Stripe::create_checkout_session( $params );
 
