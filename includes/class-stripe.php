@@ -55,12 +55,28 @@ class SDD_Stripe {
 	}
 
 	/**
-	 * List webhook endpoints.
+	 * Update a webhook endpoint.
 	 *
+	 * @param string $endpoint_id Endpoint ID.
+	 * @param array  $params      Endpoint parameters.
 	 * @return array|WP_Error
 	 */
-	public static function list_webhook_endpoints() {
-		return self::get( 'webhook_endpoints', array( 'limit' => 100 ) );
+	public static function update_webhook_endpoint( $endpoint_id, $params ) {
+		return self::post( 'webhook_endpoints/' . rawurlencode( $endpoint_id ), $params );
+	}
+
+	/**
+	 * List webhook endpoints.
+	 *
+	 * @param string $starting_after Endpoint ID to page after.
+	 * @return array|WP_Error
+	 */
+	public static function list_webhook_endpoints( $starting_after = '' ) {
+		$params = array( 'limit' => 100 );
+		if ( $starting_after ) {
+			$params['starting_after'] = $starting_after;
+		}
+		return self::get( 'webhook_endpoints', $params );
 	}
 
 	/**

@@ -13,6 +13,16 @@ defined( 'ABSPATH' ) || exit;
 class SDD_Webhook {
 
 	/**
+	 * Stripe events the webhook endpoint listens to.
+	 */
+	const EVENTS = array(
+		'checkout.session.completed',
+		'checkout.session.async_payment_succeeded',
+		'checkout.session.async_payment_failed',
+		'charge.refunded',
+	);
+
+	/**
 	 * Initialize hooks.
 	 */
 	public static function init() {
@@ -120,6 +130,10 @@ class SDD_Webhook {
 	/**
 	 * Register webhook endpoint with Stripe.
 	 *
+	 * Keeps the stored endpoint when it still exists and its secret is known,
+	 * deletes any other endpoint pointing at this site's webhook URL, and only
+	 * creates a new endpoint when there is none to keep.
+	 *
 	 * @return true|WP_Error
 	 */
 	public static function register_endpoint() {
@@ -130,33 +144,132 @@ class SDD_Webhook {
 			);
 		}
 
-		$stored_id = get_option( 'sdd_stripe_webhook_endpoint_id', '' );
-		if ( $stored_id ) {
-			SDD_Stripe::delete_webhook_endpoint( $stored_id );
+		$url       = self::get_endpoint_url();
+		$endpoints = self::find_endpoints( $url );
+		if ( is_wp_error( $endpoints ) ) {
+			return $endpoints;
 		}
 
-		$url = rest_url( SDD_REST_NAMESPACE . '/webhook' );
+		$stored_id = get_option( 'sdd_stripe_webhook_endpoint_id', '' );
+		$keep_id   = '';
+		if ( $stored_id && '' !== SDD_Credentials::get_webhook_secret() && in_array( $stored_id, $endpoints, true ) ) {
+			$keep_id = $stored_id;
+		}
 
-		$result = SDD_Stripe::create_webhook_endpoint(
-			array(
-				'url'            => $url,
-				'enabled_events' => array(
-					'checkout.session.completed',
-					'checkout.session.async_payment_succeeded',
-					'checkout.session.async_payment_failed',
-					'charge.refunded',
-				),
-			)
-		);
+		$failed = self::delete_endpoints( array_diff( $endpoints, array( $keep_id ) ) );
+
+		if ( $keep_id ) {
+			$result = SDD_Stripe::update_webhook_endpoint(
+				$keep_id,
+				array(
+					'enabled_events' => self::EVENTS,
+					'disabled'       => 'false',
+				)
+			);
+		} else {
+			$result = SDD_Stripe::create_webhook_endpoint(
+				array(
+					'url'            => $url,
+					'enabled_events' => self::EVENTS,
+				)
+			);
+		}
 
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
 
-		update_option( 'sdd_stripe_webhook_endpoint_id', $result['id'] ?? '', false );
-		SDD_Credentials::save_webhook_secret( $result['secret'] ?? '' );
+		if ( ! $keep_id ) {
+			update_option( 'sdd_stripe_webhook_endpoint_id', $result['id'] ?? '', false );
+			SDD_Credentials::save_webhook_secret( $result['secret'] ?? '' );
+		}
+
+		if ( $failed ) {
+			return new WP_Error(
+				'sdd_webhook_cleanup',
+				sprintf(
+					/* translators: 1: number of endpoints, 2: Stripe error message */
+					_n(
+						'API key saved and webhook registered, but %1$d old webhook endpoint for this site could not be deleted from Stripe. Delete it in your Stripe Dashboard. Stripe error: %2$s',
+						'API key saved and webhook registered, but %1$d old webhook endpoints for this site could not be deleted from Stripe. Delete them in your Stripe Dashboard. Stripe error: %2$s',
+						count( $failed ),
+						'simple-digital-downloads'
+					),
+					count( $failed ),
+					reset( $failed )->get_error_message()
+				)
+			);
+		}
 
 		return true;
+	}
+
+	/**
+	 * Delete every Stripe webhook endpoint pointing at this site's webhook URL.
+	 *
+	 * Used on uninstall, so failures are ignored.
+	 */
+	public static function delete_site_endpoints() {
+		$endpoints = self::find_endpoints( self::get_endpoint_url() );
+		if ( ! is_wp_error( $endpoints ) ) {
+			self::delete_endpoints( $endpoints );
+		}
+	}
+
+	/**
+	 * This site's webhook URL.
+	 *
+	 * @return string
+	 */
+	public static function get_endpoint_url() {
+		return rest_url( SDD_REST_NAMESPACE . '/webhook' );
+	}
+
+	/**
+	 * Find Stripe webhook endpoints whose URL exactly matches.
+	 *
+	 * @param string $url Webhook URL.
+	 * @return string[]|WP_Error Endpoint IDs.
+	 */
+	private static function find_endpoints( $url ) {
+		$ids            = array();
+		$starting_after = '';
+
+		do {
+			$page = SDD_Stripe::list_webhook_endpoints( $starting_after );
+			if ( is_wp_error( $page ) ) {
+				return $page;
+			}
+
+			$data = $page['data'] ?? array();
+			foreach ( $data as $endpoint ) {
+				if ( ( $endpoint['url'] ?? '' ) === $url ) {
+					$ids[] = $endpoint['id'];
+				}
+			}
+
+			$last           = end( $data );
+			$starting_after = $last['id'] ?? '';
+		} while ( ! empty( $page['has_more'] ) && $starting_after );
+
+		return $ids;
+	}
+
+	/**
+	 * Delete Stripe webhook endpoints.
+	 *
+	 * @param string[] $ids Endpoint IDs.
+	 * @return WP_Error[] Errors for endpoints that could not be deleted.
+	 */
+	private static function delete_endpoints( $ids ) {
+		$failed = array();
+		foreach ( $ids as $id ) {
+			$result = SDD_Stripe::delete_webhook_endpoint( $id );
+			if ( is_wp_error( $result ) ) {
+				$failed[] = $result;
+			}
+		}
+		return $failed;
 	}
 
 	/**

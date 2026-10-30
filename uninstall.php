@@ -2,7 +2,8 @@
 /**
  * Uninstall handler.
  *
- * Only removes options, transients, and cron hooks.
+ * Only removes options, transients, cron hooks, and this site's Stripe
+ * webhook endpoint.
  * Orders, Downloads, and uploaded files are never deleted automatically.
  * Data removal is a manual action via the settings page.
  *
@@ -10,6 +11,12 @@
  */
 
 defined( 'WP_UNINSTALL_PLUGIN' ) || exit;
+
+require_once __DIR__ . '/simple-digital-downloads.php';
+
+if ( SDD_Credentials::is_connected() ) {
+	SDD_Webhook::delete_site_endpoints();
+}
 
 $options = array(
 	'sdd_stripe_secret_key',

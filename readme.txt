@@ -4,7 +4,7 @@ Tags: stripe, digital downloads, sell files, ebooks, pdf
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 1.0.2
+Stable tag: 1.0.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -59,6 +59,11 @@ No. Tax and VAT collection is not included. You are responsible for your own tax
 Purchase data is processed by Stripe. See [Stripe's Privacy Policy](https://stripe.com/privacy) for details. Customer email addresses and order records are stored in your WordPress database.
 
 == Changelog ==
+
+= 1.0.3 =
+* Saving the Stripe key no longer leaves duplicate webhook endpoints in Stripe. The existing endpoint is kept when possible, and any other endpoint pointing at this site's webhook URL is deleted.
+* Shows a warning on the settings page if an old webhook endpoint could not be deleted from Stripe.
+* Deleting the plugin now also deletes this site's webhook endpoint from Stripe.
 
 = 1.0.2 =
 * Added Git Updater headers so the plugin can update from GitHub.

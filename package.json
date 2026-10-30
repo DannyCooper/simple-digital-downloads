@@ -1,6 +1,6 @@
 {
 	"name": "simple-digital-downloads",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"description": "Sell digital files with Stripe on WordPress.",
 	"files": [
 		"assets/**",
