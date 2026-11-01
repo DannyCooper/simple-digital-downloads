@@ -244,7 +244,7 @@ class SDD_Meta_Boxes {
 	private static function render_file_row( $file_id, $is_template = false ) {
 		$filename = '';
 		if ( $file_id ) {
-			$filename = basename( get_attached_file( $file_id ) );
+			$filename = SDD_Uploads::get_display_filename( $file_id );
 		}
 		$id_attr = $is_template ? '{{ data.id }}' : esc_attr( (string) $file_id );
 		?>

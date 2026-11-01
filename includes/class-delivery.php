@@ -230,7 +230,7 @@ class SDD_Delivery {
 					<ul class="sdd-file-downloads">
 						<?php foreach ( $file_ids as $index => $file_id ) : ?>
 							<?php
-							$filename = basename( get_attached_file( $file_id ) );
+							$filename = SDD_Uploads::get_display_filename( $file_id );
 							$url      = SDD_Orders::get_file_download_url( $token, $index );
 							?>
 							<li>

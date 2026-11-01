@@ -154,7 +154,7 @@ class SDD_Download_Handler {
 		echo '<!DOCTYPE html><html><head><title>' . esc_html( $name ) . '</title></head><body>';
 		echo '<h1>' . esc_html( $name ) . '</h1><ul>';
 		foreach ( $file_ids as $index => $file_id ) {
-			$filename = basename( get_attached_file( $file_id ) );
+			$filename = SDD_Uploads::get_display_filename( $file_id );
 			$url      = SDD_Orders::get_file_download_url( $token, $index );
 			echo '<li><a href="' . esc_url( $url ) . '">' . esc_html( $filename ) . '</a></li>';
 		}
@@ -172,9 +172,9 @@ class SDD_Download_Handler {
 		$file_ids  = $result['file_ids'];
 		$index     = $result['file_index'];
 		$path      = $result['file_path'];
-		$filename  = basename( $path );
+		$filename  = SDD_Uploads::get_display_filename( $file_ids[ $index ] ) ?: basename( $path );
 		$size      = filesize( $path );
-		$mime      = wp_check_filetype( $filename )['type'] ?: 'application/octet-stream';
+		$mime      = wp_check_filetype( basename( $path ) )['type'] ?: 'application/octet-stream';
 
 		while ( ob_get_level() ) {
 			ob_end_clean();

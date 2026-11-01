@@ -22,6 +22,8 @@ $options = array(
 	'sdd_delivery_page_id',
 	'sdd_file_protection_ok',
 	'sdd_file_protection_checked',
+	'sdd_file_protection_server',
+	'sdd_filenames_migrated',
 );
 
 foreach ( $options as $option ) {

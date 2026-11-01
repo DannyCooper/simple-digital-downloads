@@ -4,7 +4,7 @@ Tags: stripe, digital downloads, sell files, ebooks, pdf
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 1.0.2
+Stable tag: 1.0.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -59,6 +59,13 @@ No. Tax and VAT collection is not included. You are responsible for your own tax
 Purchase data is processed by Stripe. See [Stripe's Privacy Policy](https://stripe.com/privacy) for details. Customer email addresses and order records are stored in your WordPress database.
 
 == Changelog ==
+
+= 1.0.3 =
+* Files in the protected folder are now stored under random, unguessable names. Original filenames are still shown to you and sent to buyers. Existing files are renamed automatically.
+* The file protection check now reports clear states (protected, unguessable names only, exposed, unknown) instead of a generic warning, and explains when the server ignores .htaccess rules (common on nginx hosting).
+* A failed protection check is no longer treated as "protected".
+* The admin warning appears only when protection newly drops to exposed, not every week. Added a "Re-check now" button.
+* Image sizes left behind when a file is moved into the protected folder are now removed.
 
 = 1.0.2 =
 * Added Git Updater headers so the plugin can update from GitHub.

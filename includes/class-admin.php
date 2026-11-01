@@ -80,10 +80,14 @@ class SDD_Admin {
 			self::save_stripe_key();
 		}
 
+		if ( isset( $_GET['sdd_recheck_protection'] ) && check_admin_referer( 'sdd_recheck_protection' ) ) {
+			SDD_Uploads::run_protection_self_check();
+		}
+
 		$stored_key   = SDD_Credentials::get_secret_key();
 		$masked       = $stored_key ? SDD_Credentials::mask_key( $stored_key ) : '';
 		$mode         = SDD_Credentials::get_mode();
-		$protection   = get_option( 'sdd_file_protection_ok', 'unknown' );
+		$protection   = SDD_Uploads::get_protection_report();
 		$webhook_id   = get_option( 'sdd_stripe_webhook_endpoint_id', '' );
 		$delivery_id  = (int) get_option( 'sdd_delivery_page_id', 0 );
 		?>
@@ -189,14 +193,37 @@ class SDD_Admin {
 					<tr>
 						<th scope="row"><?php esc_html_e( 'File Protection', 'simple-digital-downloads' ); ?></th>
 						<td>
-							<?php if ( 'yes' === $protection ) : ?>
+							<?php if ( 'yes' === $protection['state'] ) : ?>
 								<span style="color:green;">✓</span> <?php esc_html_e( 'Your download files are protected.', 'simple-digital-downloads' ); ?>
-							<?php elseif ( 'no' === $protection ) : ?>
-								<span style="color:red;">✗</span> <?php esc_html_e( 'Your download files may be publicly accessible. Please contact your hosting provider and ask them to block direct access to your protected uploads folder. You can share the following with them:', 'simple-digital-downloads' ); ?>
-								<pre style="background:#f0f0f1;padding:10px;overflow:auto;"><?php echo esc_html( SDD_Uploads::get_nginx_rules() ); ?></pre>
+							<?php elseif ( 'obscured' === $protection['state'] ) : ?>
+								<span style="color:#dba617;">●</span> <?php esc_html_e( 'Your download files are stored under random, unguessable names, so nobody can find them without a download link.', 'simple-digital-downloads' ); ?>
+								<p class="description">
+									<?php
+									if ( $protection['nginx'] ) {
+										esc_html_e( 'Your host serves files directly and ignores .htaccess rules, so the folder cannot be locked down from WordPress. This is common on shared hosting. For full protection, ask your host to add the rule below.', 'simple-digital-downloads' );
+									} else {
+										esc_html_e( 'Your server does not block direct access to the protected folder. For full protection, ask your host to add the rule below.', 'simple-digital-downloads' );
+									}
+									?>
+								</p>
+							<?php elseif ( 'no' === $protection['state'] ) : ?>
+								<span style="color:red;">✗</span> <?php esc_html_e( 'Some download files can be requested directly and still use their original filenames. They are being renamed automatically — re-check in a moment. If this persists, ask your host to add the rule below.', 'simple-digital-downloads' ); ?>
+							<?php elseif ( 'unknown' === $protection['state'] && get_option( 'sdd_file_protection_checked' ) ) : ?>
+								<span style="color:#787c82;">?</span> <?php esc_html_e( 'The check could not get a clear answer from your server (the request failed or returned an unexpected response). Try again, or test a direct file URL yourself.', 'simple-digital-downloads' ); ?>
 							<?php else : ?>
 								<?php esc_html_e( 'Not yet checked.', 'simple-digital-downloads' ); ?>
 							<?php endif; ?>
+
+							<?php if ( in_array( $protection['state'], array( 'obscured', 'no' ), true ) ) : ?>
+								<details style="margin-top:8px;">
+									<summary><?php esc_html_e( 'Rule to send to your host', 'simple-digital-downloads' ); ?></summary>
+									<pre style="background:#f0f0f1;padding:10px;overflow:auto;"><?php echo esc_html( SDD_Uploads::get_nginx_rules() ); ?></pre>
+								</details>
+							<?php endif; ?>
+
+							<p>
+								<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'sdd_recheck_protection', '1' ), 'sdd_recheck_protection' ) ); ?>" class="button button-secondary"><?php esc_html_e( 'Re-check now', 'simple-digital-downloads' ); ?></a>
+							</p>
 						</td>
 					</tr>
 				</table>
@@ -278,7 +305,7 @@ class SDD_Admin {
 
 		if ( get_transient( 'sdd_protection_notice' ) && current_user_can( 'manage_options' ) ) {
 			echo '<div class="notice notice-warning is-dismissible"><p>';
-			echo esc_html__( 'Simple Digital Downloads: your download files may be publicly accessible. Please contact your hosting provider to fix this.', 'simple-digital-downloads' );
+			echo esc_html__( 'Simple Digital Downloads: some of your download files can be requested directly. See the settings page for details.', 'simple-digital-downloads' );
 			echo ' <a href="' . esc_url( admin_url( 'edit.php?post_type=sdd_download&page=sdd-settings' ) ) . '">' . esc_html__( 'View settings', 'simple-digital-downloads' ) . '</a>';
 			echo '</p></div>';
 		}
