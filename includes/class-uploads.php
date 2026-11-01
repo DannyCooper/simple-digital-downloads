@@ -472,7 +472,7 @@ class SDD_Uploads {
 	 * Result states:
 	 * - yes:      direct requests to the protected folder are blocked.
 	 * - obscured: direct requests are served, but every file has an unguessable name.
-	 * - no:       direct requests are served and some files have guessable names.
+	 * - no:       direct requests are served and some files still have guessable names (until the migration finishes).
 	 * - unknown:  the check could not get a clear answer.
 	 *
 	 * @return string The stored state.
@@ -507,18 +507,9 @@ class SDD_Uploads {
 			}
 		}
 
-		$previous = get_option( 'sdd_file_protection_ok', 'unknown' );
-
 		update_option( 'sdd_file_protection_ok', $state, false );
 		update_option( 'sdd_file_protection_server', $server, false );
 		update_option( 'sdd_file_protection_checked', time(), false );
-
-		// Only nag when the situation newly becomes risky, not every week.
-		if ( 'no' === $state && 'no' !== $previous ) {
-			set_transient( 'sdd_protection_notice', 1, WEEK_IN_SECONDS );
-		} elseif ( 'no' !== $state ) {
-			delete_transient( 'sdd_protection_notice' );
-		}
 
 		return $state;
 	}

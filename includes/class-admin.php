@@ -194,27 +194,22 @@ class SDD_Admin {
 						<th scope="row"><?php esc_html_e( 'File Protection', 'simple-digital-downloads' ); ?></th>
 						<td>
 							<?php if ( 'yes' === $protection['state'] ) : ?>
-								<span style="color:green;">✓</span> <?php esc_html_e( 'Your download files are protected.', 'simple-digital-downloads' ); ?>
-							<?php elseif ( 'obscured' === $protection['state'] ) : ?>
-								<span style="color:#dba617;">●</span> <?php esc_html_e( 'Your download files are stored under random, unguessable names, so nobody can find them without a download link.', 'simple-digital-downloads' ); ?>
+								<span style="color:green;">✓</span> <?php esc_html_e( 'Your download files are stored in a folder that your server blocks from direct access. Buyers can only get them through their personal download link.', 'simple-digital-downloads' ); ?>
+							<?php elseif ( 'unknown' === $protection['state'] && ! get_option( 'sdd_file_protection_checked' ) ) : ?>
+								<?php esc_html_e( 'Not yet checked.', 'simple-digital-downloads' ); ?>
+							<?php elseif ( 'unknown' === $protection['state'] ) : ?>
+								<?php esc_html_e( 'The last check could not get a clear answer from your server. Use "Re-check now" to try again.', 'simple-digital-downloads' ); ?>
+							<?php else : ?>
+								<span style="color:green;">✓</span> <?php esc_html_e( 'Your download files are stored in a hidden folder under random filenames, and buyers can only get them through their personal download link. Nobody can find a file without that link.', 'simple-digital-downloads' ); ?>
 								<p class="description">
 									<?php
 									if ( $protection['nginx'] ) {
-										esc_html_e( 'Your host serves files directly and ignores .htaccess rules, so the folder cannot be locked down from WordPress. This is common on shared hosting. For full protection, ask your host to add the rule below.', 'simple-digital-downloads' );
+										esc_html_e( 'Your server also lets people request files in that folder directly if they somehow knew the exact address, because it ignores .htaccess rules (common on nginx hosting). If you want extra protection, you can ask your host to add the rule below. Otherwise, no action is needed.', 'simple-digital-downloads' );
 									} else {
-										esc_html_e( 'Your server does not block direct access to the protected folder. For full protection, ask your host to add the rule below.', 'simple-digital-downloads' );
+										esc_html_e( 'Your server does not block direct requests to that folder. If you want extra protection, you can ask your host to add the rule below. Otherwise, no action is needed.', 'simple-digital-downloads' );
 									}
 									?>
 								</p>
-							<?php elseif ( 'no' === $protection['state'] ) : ?>
-								<span style="color:red;">✗</span> <?php esc_html_e( 'Some download files can be requested directly and still use their original filenames. They are being renamed automatically — re-check in a moment. If this persists, ask your host to add the rule below.', 'simple-digital-downloads' ); ?>
-							<?php elseif ( 'unknown' === $protection['state'] && get_option( 'sdd_file_protection_checked' ) ) : ?>
-								<span style="color:#787c82;">?</span> <?php esc_html_e( 'The check could not get a clear answer from your server (the request failed or returned an unexpected response). Try again, or test a direct file URL yourself.', 'simple-digital-downloads' ); ?>
-							<?php else : ?>
-								<?php esc_html_e( 'Not yet checked.', 'simple-digital-downloads' ); ?>
-							<?php endif; ?>
-
-							<?php if ( in_array( $protection['state'], array( 'obscured', 'no' ), true ) ) : ?>
 								<details style="margin-top:8px;">
 									<summary><?php esc_html_e( 'Rule to send to your host', 'simple-digital-downloads' ); ?></summary>
 									<pre style="background:#f0f0f1;padding:10px;overflow:auto;"><?php echo esc_html( SDD_Uploads::get_nginx_rules() ); ?></pre>
@@ -301,13 +296,6 @@ class SDD_Admin {
 		if ( get_transient( 'sdd_stripe_auth_error' ) ) {
 			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'Your Stripe API key is invalid or has been revoked. Please update it in Downloads → Settings.', 'simple-digital-downloads' ) . '</p></div>';
 			delete_transient( 'sdd_stripe_auth_error' );
-		}
-
-		if ( get_transient( 'sdd_protection_notice' ) && current_user_can( 'manage_options' ) ) {
-			echo '<div class="notice notice-warning is-dismissible"><p>';
-			echo esc_html__( 'Simple Digital Downloads: some of your download files can be requested directly. See the settings page for details.', 'simple-digital-downloads' );
-			echo ' <a href="' . esc_url( admin_url( 'edit.php?post_type=sdd_download&page=sdd-settings' ) ) . '">' . esc_html__( 'View settings', 'simple-digital-downloads' ) . '</a>';
-			echo '</p></div>';
 		}
 	}
 
