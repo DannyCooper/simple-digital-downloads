@@ -53,6 +53,15 @@ class SDD_Admin {
 		register_setting( 'sdd_settings', 'sdd_delivery_page_id', array( 'sanitize_callback' => 'absint' ) );
 		register_setting(
 			'sdd_settings',
+			'sdd_allow_promotion_codes',
+			array(
+				'sanitize_callback' => function ( $value ) {
+					return empty( $value ) ? '' : '1';
+				},
+			)
+		);
+		register_setting(
+			'sdd_settings',
 			'sdd_stripe_webhook_secret',
 			array(
 				'sanitize_callback' => function ( $value ) {
@@ -152,6 +161,16 @@ class SDD_Admin {
 						<th scope="row"><label for="sdd_currency"><?php esc_html_e( 'Currency', 'simple-digital-downloads' ); ?></label></th>
 						<td>
 							<input type="text" id="sdd_currency" name="sdd_currency" value="<?php echo esc_attr( get_option( 'sdd_currency', 'USD' ) ); ?>" class="small-text" maxlength="3">
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Promotion Codes', 'simple-digital-downloads' ); ?></th>
+						<td>
+							<label for="sdd_allow_promotion_codes">
+								<input type="checkbox" id="sdd_allow_promotion_codes" name="sdd_allow_promotion_codes" value="1" <?php checked( get_option( 'sdd_allow_promotion_codes' ), '1' ); ?>>
+								<?php esc_html_e( 'Let customers enter a promotion code at checkout', 'simple-digital-downloads' ); ?>
+							</label>
+							<p class="description"><?php esc_html_e( 'Create and manage codes in your Stripe Dashboard under Product catalog → Coupons.', 'simple-digital-downloads' ); ?></p>
 						</td>
 					</tr>
 					<tr>

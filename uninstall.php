@@ -20,6 +20,7 @@ $options = array(
 	'sdd_token_expiry_hours',
 	'sdd_max_downloads',
 	'sdd_delivery_page_id',
+	'sdd_allow_promotion_codes',
 	'sdd_file_protection_ok',
 	'sdd_file_protection_checked',
 	'sdd_file_protection_server',

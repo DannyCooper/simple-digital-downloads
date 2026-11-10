@@ -304,7 +304,11 @@ class SDD_Orders {
 			return $existing->ID;
 		}
 
-		if ( ( $session['payment_status'] ?? '' ) !== 'paid' ) {
+		// A 100%-off promotion code leaves nothing to pay. Stripe reports that as
+		// "paid" or "no_payment_required" with an amount_total of 0; accept both.
+		$payment_status = $session['payment_status'] ?? '';
+		$is_zero_total  = isset( $session['amount_total'] ) && 0 === (int) $session['amount_total'];
+		if ( 'paid' !== $payment_status && ! ( 'no_payment_required' === $payment_status && $is_zero_total ) ) {
 			return new WP_Error( 'sdd_not_paid', __( 'Payment not completed.', 'simple-digital-downloads' ) );
 		}
 
@@ -328,6 +332,11 @@ class SDD_Orders {
 
 		$currency = get_option( 'sdd_currency', 'USD' );
 		$amount   = (int) get_post_meta( $download_id, '_sdd_price', true );
+		// Record what the customer was actually charged, which is lower than the
+		// list price when a promotion code was used.
+		if ( isset( $session['amount_total'] ) && is_numeric( $session['amount_total'] ) ) {
+			$amount = (int) $session['amount_total'];
+		}
 		$email    = sanitize_email( $session['customer_details']['email'] ?? ( $session['customer_email'] ?? '' ) );
 
 		$expiry_hours = (int) get_option( 'sdd_token_expiry_hours', 48 );

@@ -186,6 +186,12 @@ class SDD_Checkout {
 			),
 		);
 
+		// Show Stripe's "Add promotion code" field on the Checkout page. The codes
+		// themselves are created and managed in the Stripe Dashboard.
+		if ( get_option( 'sdd_allow_promotion_codes' ) ) {
+			$params['allow_promotion_codes'] = 'true';
+		}
+
 		$product_id = SDD_Meta_Boxes::get_stripe_product_id( $download->ID );
 		if ( $product_id ) {
 			$params['line_items'][0]['price_data']['product'] = $product_id;
