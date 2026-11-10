@@ -28,6 +28,7 @@ Simple Digital Downloads lets you sell digital files on your WordPress site usin
 * Automatic webhook registration
 * Delivery page with payment confirmation polling
 * Download limits and link expiry
+* Optional Stripe promotion codes at checkout
 * Order management with email resend
 * GDPR personal data export and erasure support
 
@@ -49,6 +50,10 @@ Simple Digital Downloads lets you sell digital files on your WordPress site usin
 * Webhook Endpoints — Write
 * Refunds — Read
 * Products — Write (optional, for BookFunnel or other integrations)
+
+= Can I offer discount codes? =
+
+Yes. Turn on "Promotion Codes" in Downloads → Settings, then create coupons and promotion codes in your Stripe Dashboard (Product catalog → Coupons). Customers get an "Add promotion code" field on the Stripe Checkout page. Orders record the amount actually charged, and a 100%-off code is treated like a free download.
 
 = Does this plugin handle taxes? =
 
